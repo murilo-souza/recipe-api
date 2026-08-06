@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RecipeApp.Application.Auth;
+using RecipeApp.Application.Auth.DTO;
+using RecipeApp.Application.Auth.Interface;
 using RecipeApp.Domain.Entities;
 using RecipeApp.Infrastructure.Persistence;
 
@@ -13,12 +15,14 @@ public class AuthController : ControllerBase
     private readonly AppDbContext _db;
     private readonly ITokenService _tokenService;
     private readonly IConfiguration _config;
+    private readonly IGoogleAuthValidator _googleValidator;
 
-    public AuthController(AppDbContext db, ITokenService tokenService, IConfiguration config)
+    public AuthController(AppDbContext db, ITokenService tokenService, IConfiguration config, IGoogleAuthValidator googleValidator)
     {
         _db = db;
         _tokenService = tokenService;
         _config = config;
+        _googleValidator = googleValidator;
     }
 
     [HttpPost("register")]
@@ -50,6 +54,60 @@ public class AuthController : ControllerBase
             return Unauthorized("Email ou senha inválidos.");
 
         return await IssueTokens(user);
+    }
+
+    [HttpPost("google")]
+    public async Task<ActionResult<AuthResponse>> GoogleLogin(GoogleLoginRequest request)
+    {
+        var googleUser = await _googleValidator.ValidateAsync(request.IdToken);
+        if (googleUser is null)
+            return Unauthorized("Token do Google inválido.");
+
+        // 1. Já existe um login externo vinculado a esse Google Sub?
+        var existingLogin = await _db.ExternalLogins
+            .Include(e => e.User)
+            .SingleOrDefaultAsync(e => e.Provider == "google" && e.ProviderUserId == googleUser.Sub);
+
+        if (existingLogin is not null)
+            return await IssueTokens(existingLogin.User);
+
+        // 2. Não tem login externo ainda — já existe um User com esse email
+        //    (ex: cadastrou por email/senha antes, agora está logando via Google)?
+        var existingUser = await _db.Users.SingleOrDefaultAsync(u => u.Email == googleUser.Email);
+
+        if (existingUser is not null)
+        {
+            _db.ExternalLogins.Add(new ExternalLogin
+            {
+                UserId = existingUser.Id,
+                Provider = "google",
+                ProviderUserId = googleUser.Sub
+            });
+            await _db.SaveChangesAsync();
+
+            return await IssueTokens(existingUser);
+        }
+
+        // 3. Usuário novo — cria User (sem senha) + ExternalLogin
+        var newUser = new User
+        {
+            Name = googleUser.Name,
+            Email = googleUser.Email,
+            PasswordHash = null // login só via Google
+        };
+
+        _db.Users.Add(newUser);
+        await _db.SaveChangesAsync(); // precisa salvar antes pra ter o Id gerado
+
+        _db.ExternalLogins.Add(new ExternalLogin
+        {
+            UserId = newUser.Id,
+            Provider = "google",
+            ProviderUserId = googleUser.Sub
+        });
+        await _db.SaveChangesAsync();
+
+        return await IssueTokens(newUser);
     }
 
     [HttpPost("refresh")]

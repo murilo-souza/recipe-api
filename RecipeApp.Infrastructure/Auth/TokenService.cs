@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using RecipeApp.Application.Auth;
+using RecipeApp.Application.Auth.Interface;
 using RecipeApp.Domain.Entities;
 
 namespace RecipeApp.Infrastructure.Auth;

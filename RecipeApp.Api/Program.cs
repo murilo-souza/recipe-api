@@ -1,10 +1,11 @@
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RecipeApp.Application.Auth;
+using RecipeApp.Application.Auth.Interface;
 using RecipeApp.Infrastructure.Auth;
 using RecipeApp.Infrastructure.Persistence;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IGoogleAuthValidator, GoogleAuthValidator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

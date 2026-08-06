@@ -1,6 +1,6 @@
 ﻿using RecipeApp.Domain.Entities;
 
-namespace RecipeApp.Application.Auth;
+namespace RecipeApp.Application.Auth.Interface;
 
 public interface ITokenService
 {
