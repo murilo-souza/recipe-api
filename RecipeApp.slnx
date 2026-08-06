@@ -1,6 +1,6 @@
 <Solution>
   <Project Path="RecipeApp.Api/RecipeApp.Api.csproj" />
   <Project Path="RecipeApp.Application/RecipeApp.Application.csproj" />
+  <Project Path="RecipeApp.Domain/RecipeApp.Domain.csproj" />
   <Project Path="RecipeApp.Infrastructure/RecipeApp.Infrastructure.csproj" />
-  <Project Path="src/RecipeApp.Domain/RecipeApp.Domain.csproj" />
 </Solution>

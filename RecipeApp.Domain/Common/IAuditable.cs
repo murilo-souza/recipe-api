@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace RecipeApp.Domain.Common;
 
-namespace RecipeApp.Domain.Common
+public interface IAuditable
 {
-    internal interface IAuditable
-    {
-    }
-
+    DateTimeOffset CreatedAt { get; set; }
+    DateTimeOffset UpdatedAt { get; set; }
 }
