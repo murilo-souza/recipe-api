@@ -18,6 +18,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IGoogleAuthValidator, GoogleAuthValidator>();
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<IAuthService>(sp => new AuthService(
+    sp.GetRequiredService<IAuthRepository>(),
+    sp.GetRequiredService<ITokenService>(),
+    sp.GetRequiredService<IGoogleAuthValidator>(),
+    double.Parse(builder.Configuration["Jwt:RefreshTokenDays"]!)
+));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
