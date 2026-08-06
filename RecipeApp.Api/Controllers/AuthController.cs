@@ -67,8 +67,9 @@ public class AuthController : ControllerBase
         if (stored is null || !stored.IsActive)
             return Unauthorized();
 
-        // Rotação: revoga o antigo, emite um novo
-        stored.RevokedAt = DateTimeOffset.UtcNow;
+        // Rotação: apaga o token usado (em vez de só marcar como revogado)
+        // evita acúmulo de linhas mortas na tabela a cada renovação
+        _db.RefreshTokens.Remove(stored);
         await _db.SaveChangesAsync();
 
         return await IssueTokens(stored.User);
@@ -84,7 +85,7 @@ public class AuthController : ControllerBase
             var stored = await _db.RefreshTokens.SingleOrDefaultAsync(r => r.TokenHash == hash);
             if (stored is not null)
             {
-                stored.RevokedAt = DateTimeOffset.UtcNow;
+                _db.RefreshTokens.Remove(stored); // idem: delete em vez de revoke
                 await _db.SaveChangesAsync();
             }
         }
@@ -113,7 +114,7 @@ public class AuthController : ControllerBase
             Secure = true,
             SameSite = SameSiteMode.None,
             Expires = DateTimeOffset.UtcNow.AddDays(refreshDays),
-            Path = "/api/auth" // só é enviado pras rotas de auth, não em toda requisição
+            Path = "/api/auth"
         });
 
         return new AuthResponse(accessToken, user.Name, user.Email);
