@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<Ingredient> Ingredients => Set<Ingredient>();
     public DbSet<PrepareStep> PrepareSteps => Set<PrepareStep>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -104,6 +105,18 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(c => c.RecipeId);
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("refresh_token");
+            entity.Property(r => r.TokenHash).HasMaxLength(255).IsRequired();
+            entity.HasIndex(r => r.TokenHash).IsUnique();
+
+            entity.HasOne(r => r.User)
+                  .WithMany()
+                  .HasForeignKey(r => r.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 
