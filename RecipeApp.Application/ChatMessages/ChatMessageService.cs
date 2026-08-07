@@ -1,6 +1,7 @@
 ﻿using RecipeApp.Application.ChatMessages.DTO;
 using RecipeApp.Application.ChatMessages.Interface;
 using RecipeApp.Application.Common.Exceptions;
+using RecipeApp.Application.Gemini.Interface;
 using RecipeApp.Application.Recipes.Interface;
 using RecipeApp.Domain.Entities;
 using System;
@@ -13,10 +14,12 @@ namespace RecipeApp.Application.ChatMessages
     {
         private readonly IChatMessageRepository _chatMessageRepository;
         private readonly IRecipeRepository _recipeRepository;
-        public ChatMessageService(IChatMessageRepository chatMessageRepository, IRecipeRepository recipeRepository)
+        private readonly IGeminiService _geminiService;
+        public ChatMessageService(IChatMessageRepository chatMessageRepository, IRecipeRepository recipeRepository, IGeminiService geminiService)
         {
             _chatMessageRepository = chatMessageRepository;
             _recipeRepository = recipeRepository;
+            _geminiService = geminiService;
         }
         public async Task<ChatMessageResponse> SendMessageAsync(int userId, int recipeId, ChatMessageRequest request)
         {
@@ -37,8 +40,32 @@ namespace RecipeApp.Application.ChatMessages
             await _chatMessageRepository.AddAsync(message);
             await _chatMessageRepository.SaveChangesAsync();
 
-            return new ChatMessageResponse(message.Id, message.Role.ToString(), message.Content, message.RecipeId, message.CreatedAt);
+            var history = await _chatMessageRepository.GetByRecipeIdAsync(recipeId);
+
+            // Passo 3: Envia a receita e o histórico para a API do Gemini gerar a resposta
+            var aiResponseText = await _geminiService.GenerateReplyAsync(recipe, history);
+
+            // Passo 4: Salva a resposta da IA no banco usando o ChatRole.Assistant
+            var aiMessage = new ChatMessage
+            {
+                RecipeId = recipeId,
+                Role = ChatRole.Assistant,
+                Content = aiResponseText
+            };
+
+            await _chatMessageRepository.AddAsync(aiMessage);
+            await _chatMessageRepository.SaveChangesAsync();
+
+            // Passo 5: Retorna o DTO com a resposta da IA para ser exibida no front-end
+            return new ChatMessageResponse(
+                aiMessage.Id,
+                aiMessage.Role.ToString(),
+                aiMessage.Content,
+                aiMessage.RecipeId,
+                aiMessage.CreatedAt);
+
         }
+
         public async Task<IEnumerable<ChatMessageResponse>> GetMessagesByRecipeIdAsync(int userId, int recipeId)
         {
             var recipe = await _recipeRepository.GetByIdAsync(recipeId);

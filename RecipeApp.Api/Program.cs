@@ -8,6 +8,8 @@ using RecipeApp.Application.Categories;
 using RecipeApp.Application.Categories.Interface;
 using RecipeApp.Application.ChatMessages;
 using RecipeApp.Application.ChatMessages.Interface;
+using RecipeApp.Application.Gemini;
+using RecipeApp.Application.Gemini.Interface;
 using RecipeApp.Application.Recipes;
 using RecipeApp.Application.Recipes.Interface;
 using RecipeApp.Infrastructure.Auth;
@@ -52,6 +54,8 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 
 builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
 builder.Services.AddScoped<IChatMessageService, ChatMessageService>();
