@@ -6,10 +6,13 @@ using RecipeApp.Application.Auth;
 using RecipeApp.Application.Auth.Interface;
 using RecipeApp.Application.Categories;
 using RecipeApp.Application.Categories.Interface;
+using RecipeApp.Application.ChatMessages;
+using RecipeApp.Application.ChatMessages.Interface;
 using RecipeApp.Application.Recipes;
 using RecipeApp.Application.Recipes.Interface;
 using RecipeApp.Infrastructure.Auth;
 using RecipeApp.Infrastructure.Categories;
+using RecipeApp.Infrastructure.ChatMessages;
 using RecipeApp.Infrastructure.Persistence;
 using RecipeApp.Infrastructure.Recipes;
 using System.Text;
@@ -49,6 +52,9 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+builder.Services.AddScoped<IChatMessageService, ChatMessageService>();
 
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IRecipeService, RecipeService>();
