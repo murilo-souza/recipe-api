@@ -4,9 +4,12 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RecipeApp.Application.Auth;
 using RecipeApp.Application.Auth.Interface;
+using RecipeApp.Application.Categories;
+using RecipeApp.Application.Categories.Interface;
 using RecipeApp.Application.Recipes;
 using RecipeApp.Application.Recipes.Interface;
 using RecipeApp.Infrastructure.Auth;
+using RecipeApp.Infrastructure.Categories;
 using RecipeApp.Infrastructure.Persistence;
 using RecipeApp.Infrastructure.Recipes;
 using System.Text;
@@ -49,6 +52,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IRecipeService, RecipeService>();
+
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IGoogleAuthValidator, GoogleAuthValidator>();
