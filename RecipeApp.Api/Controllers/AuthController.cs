@@ -68,7 +68,7 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
-    private IActionResult BuildResponse(AuthResult result)
+    private AuthResponse BuildResponse(AuthResult result)
     {
         Response.Cookies.Append("refreshToken", result.RefreshTokenRaw, new CookieOptions
         {
@@ -79,6 +79,6 @@ public class AuthController : ControllerBase
             Path = "/api/auth"
         });
 
-        return Ok(new AuthResponse(result.AccessToken, result.UserName, result.Email));
+        return new AuthResponse(result.AccessToken, result.UserName, result.Email);
     }
 }
