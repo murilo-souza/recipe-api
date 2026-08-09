@@ -28,6 +28,16 @@ namespace RecipeApp.Infrastructure.ChatMessages
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<ChatMessage>> GetRecentByRecipeIdAsync(int recipeId, int limit = 10)
+        {
+            return await _db.ChatMessages
+                .Where(cm => cm.RecipeId == recipeId)
+                .OrderByDescending(cm => cm.CreatedAt)
+                .Take(limit)
+                .OrderBy(cm => cm.CreatedAt) // reordena cronológico depois de pegar os últimos N
+                .ToListAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _db.SaveChangesAsync();

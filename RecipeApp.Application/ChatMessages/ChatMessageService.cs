@@ -40,12 +40,19 @@ namespace RecipeApp.Application.ChatMessages
             await _chatMessageRepository.AddAsync(message);
             await _chatMessageRepository.SaveChangesAsync();
 
-            var history = await _chatMessageRepository.GetByRecipeIdAsync(recipeId);
+            var history = await _chatMessageRepository.GetRecentByRecipeIdAsync(recipeId);
+            string aiResponseText;
 
-            // Passo 3: Envia a receita e o histórico para a API do Gemini gerar a resposta
-            var aiResponseText = await _geminiService.GenerateReplyAsync(recipe, history);
+            try
+            {
+                aiResponseText = await _geminiService.GenerateReplyAsync(recipe, history);
 
-            // Passo 4: Salva a resposta da IA no banco usando o ChatRole.Assistant
+            } catch (Exception)
+            {
+                aiResponseText = "Desculpe, não consegui processar sua pergunta agora. Tente novamente em instantes."; 
+            }
+            
+
             var aiMessage = new ChatMessage
             {
                 RecipeId = recipeId,
