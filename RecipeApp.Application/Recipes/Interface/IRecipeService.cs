@@ -4,7 +4,7 @@ namespace RecipeApp.Application.Recipes.Interface;
 
 public interface IRecipeService
 {
-    Task CreateRecipeAsync(int userId, CreateRecipeRequest request);
+    Task<RecipeResponse> CreateRecipeAsync(int userId, CreateRecipeRequest request);
     Task UpdateRecipeAsync(int userId, int recipeId, UpdateRecipeRequest request);
     Task DeleteRecipeAsync(int userId, int recipeId);
     Task<IEnumerable<RecipeSummaryResponse>> GetAllRecipesAsync(int userId);

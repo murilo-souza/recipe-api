@@ -49,7 +49,7 @@ public class RecipeService : IRecipeService
         );
     }
 
-    public async Task CreateRecipeAsync(int userId, CreateRecipeRequest request)
+    public async Task<RecipeResponse> CreateRecipeAsync(int userId, CreateRecipeRequest request)
     {
         var recipe = new Recipe
         {
@@ -73,6 +73,19 @@ public class RecipeService : IRecipeService
         await _repository.AddAsync(recipe);
         await _repository.SaveChangesAsync();
 
+        return new RecipeResponse(
+            recipe.Id,
+            recipe.Title,
+            recipe.Description ?? string.Empty,
+            recipe.Image,
+            recipe.CategoryId ?? 0,
+            recipe.Ingredients.Select(i => i.Description).ToArray(),
+            recipe.PrepareSteps
+                .OrderBy(ps => ps.Position)
+                .Select(ps => new PrepareStepItem(ps.Id, ps.Description, ps.Position))
+                .ToArray(),
+            recipe.CreatedAt
+        );
     }
 
     public async Task UpdateRecipeAsync(int userId, int recipeId, UpdateRecipeRequest request)
