@@ -83,18 +83,18 @@ namespace RecipeApp.Api.Controllers
 
             try
             {
-                await _recipeService.CreateRecipeAsync(userId, request);
-                return Ok();
+                var recipe = await _recipeService.CreateRecipeAsync(userId, request);
+                return Ok(recipe);
             }
             catch (Exception ex)
             {
-                // Log the exception (you can use a logging framework here)
+                Console.Write(ex);
                 return StatusCode(StatusCodes.Status500InternalServerError, new { value = "Erro ao criar receita", statusCode = 500 });
             }
         }
 
         [Authorize]
-        [HttpPost("update")]
+        [HttpPut("update")]
         public async Task<IActionResult> UpdateRecipe([FromQuery] int recipeId, [FromBody] UpdateRecipeRequest request)
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
