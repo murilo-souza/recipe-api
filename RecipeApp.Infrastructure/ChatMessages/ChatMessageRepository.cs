@@ -38,6 +38,14 @@ namespace RecipeApp.Infrastructure.ChatMessages
                 .ToListAsync();
         }
 
+        public async Task DeleteAllMessagesByRecipeIdAsync(int recipeId)
+        {
+            var messages = await _db.ChatMessages
+                .Where(cm => cm.RecipeId == recipeId)
+                .ToListAsync();
+            _db.ChatMessages.RemoveRange(messages);
+        }
+
         public async Task SaveChangesAsync()
         {
             await _db.SaveChangesAsync();

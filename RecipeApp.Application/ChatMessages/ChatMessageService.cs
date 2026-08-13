@@ -88,5 +88,17 @@ namespace RecipeApp.Application.ChatMessages
             return messages.Select(m => new ChatMessageResponse(m.Id, m.Role.ToString(), m.Content, m.RecipeId, m.CreatedAt));
 
         }
+
+        public async Task DeleteAllMessagesByRecipeIdAsync(int userId, int recipeId)
+        {
+            var recipe = await _recipeRepository.GetByIdAsync(recipeId);
+            if (recipe is null)
+                throw new RecipeNotFoundException();
+            if (recipe.UserId != userId)
+                throw new ForbiddenAccessException();
+
+            await _chatMessageRepository.DeleteAllMessagesByRecipeIdAsync(recipeId);
+            await _chatMessageRepository.SaveChangesAsync();
+        }
     }
 }
