@@ -1,6 +1,6 @@
 ﻿namespace RecipeApp.Application.Auth;
 
-public record GoogleUserInfo(string Sub, string Email, string Name);
+public record GoogleUserInfo(string Sub, string Email, string Name, string? Picture);
 
 public interface IGoogleAuthValidator
 {

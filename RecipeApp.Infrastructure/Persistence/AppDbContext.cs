@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
             entity.HasIndex(u => u.Email).IsUnique();
             entity.Property(u => u.Name).HasMaxLength(120).IsRequired();
             entity.Property(u => u.Email).HasMaxLength(255).IsRequired();
+            entity.Property(u => u.ProfileImage).HasMaxLength(500);
         });
 
         modelBuilder.Entity<ExternalLogin>(entity =>
@@ -33,6 +34,7 @@ public class AppDbContext : DbContext
             entity.HasIndex(e => new { e.Provider, e.ProviderUserId }).IsUnique();
             entity.Property(e => e.Provider).HasMaxLength(30).IsRequired();
             entity.Property(e => e.ProviderUserId).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.PictureUrl).HasMaxLength(500);
 
             entity.HasOne(e => e.User)
                   .WithMany(u => u.ExternalLogins)

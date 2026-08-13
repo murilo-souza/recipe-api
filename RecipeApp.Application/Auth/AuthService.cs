@@ -69,7 +69,9 @@ public class AuthService : IAuthService
             {
                 UserId = existingUser.Id,
                 Provider = "google",
-                ProviderUserId = googleUser.Sub
+                ProviderUserId = googleUser.Sub,
+                PictureUrl = googleUser.Picture
+
             });
             await _repository.SaveChangesAsync();
 
