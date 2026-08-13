@@ -8,6 +8,7 @@ using RecipeApp.Application.Categories;
 using RecipeApp.Application.Categories.Interface;
 using RecipeApp.Application.ChatMessages;
 using RecipeApp.Application.ChatMessages.Interface;
+using RecipeApp.Application.Common.Interface;
 using RecipeApp.Application.Gemini;
 using RecipeApp.Application.Gemini.Interface;
 using RecipeApp.Application.Recipes;
@@ -17,6 +18,7 @@ using RecipeApp.Application.Users.Interface;
 using RecipeApp.Infrastructure.Auth;
 using RecipeApp.Infrastructure.Categories;
 using RecipeApp.Infrastructure.ChatMessages;
+using RecipeApp.Infrastructure.Common;
 using RecipeApp.Infrastructure.Persistence;
 using RecipeApp.Infrastructure.Recipes;
 using RecipeApp.Infrastructure.Users;
@@ -74,11 +76,14 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IGoogleAuthValidator, GoogleAuthValidator>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IAuthService>(sp => new AuthService(
     sp.GetRequiredService<IAuthRepository>(),
     sp.GetRequiredService<ITokenService>(),
     sp.GetRequiredService<IGoogleAuthValidator>(),
+    sp.GetRequiredService<ICloudinaryService>(),
     double.Parse(builder.Configuration["Jwt:RefreshTokenDays"]!)
 ));
 
