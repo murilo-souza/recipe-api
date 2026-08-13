@@ -12,11 +12,14 @@ using RecipeApp.Application.Gemini;
 using RecipeApp.Application.Gemini.Interface;
 using RecipeApp.Application.Recipes;
 using RecipeApp.Application.Recipes.Interface;
+using RecipeApp.Application.Users;
+using RecipeApp.Application.Users.Interface;
 using RecipeApp.Infrastructure.Auth;
 using RecipeApp.Infrastructure.Categories;
 using RecipeApp.Infrastructure.ChatMessages;
 using RecipeApp.Infrastructure.Persistence;
 using RecipeApp.Infrastructure.Recipes;
+using RecipeApp.Infrastructure.Users;
 using System.Text;
 
 
@@ -56,6 +59,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
 builder.Services.AddScoped<IChatMessageService, ChatMessageService>();
