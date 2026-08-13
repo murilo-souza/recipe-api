@@ -1,5 +1,6 @@
 ﻿using RecipeApp.Application.Auth.DTO;
 using RecipeApp.Application.Auth.Interface;
+using RecipeApp.Application.Common.Interface;
 using RecipeApp.Domain.Entities;
 
 namespace RecipeApp.Application.Auth;
@@ -9,17 +10,20 @@ public class AuthService : IAuthService
     private readonly IAuthRepository _repository;
     private readonly ITokenService _tokenService;
     private readonly IGoogleAuthValidator _googleValidator;
+    private readonly ICloudinaryService _cloudinaryService;
     private readonly double _refreshTokenDays;
 
     public AuthService(
         IAuthRepository repository,
         ITokenService tokenService,
         IGoogleAuthValidator googleValidator,
+        ICloudinaryService cloudinaryService,
         double refreshTokenDays)
     {
         _repository = repository;
         _tokenService = tokenService;
         _googleValidator = googleValidator;
+        _cloudinaryService = cloudinaryService;
         _refreshTokenDays = refreshTokenDays;
     }
 
@@ -62,6 +66,9 @@ public class AuthService : IAuthService
         if (existingLogin is not null)
             return (true, null, await IssueTokensAsync(existingLogin.User));
 
+
+        var rehostedPicture = await TryRehostPictureAsync(googleUser.Picture);
+
         var existingUser = await _repository.GetUserByEmailAsync(googleUser.Email);
         if (existingUser is not null)
         {
@@ -69,7 +76,9 @@ public class AuthService : IAuthService
             {
                 UserId = existingUser.Id,
                 Provider = "google",
-                ProviderUserId = googleUser.Sub
+                ProviderUserId = googleUser.Sub,
+                PictureUrl = rehostedPicture
+
             });
             await _repository.SaveChangesAsync();
 
@@ -90,7 +99,8 @@ public class AuthService : IAuthService
         {
             UserId = newUser.Id,
             Provider = "google",
-            ProviderUserId = googleUser.Sub
+            ProviderUserId = googleUser.Sub,
+            PictureUrl = rehostedPicture
         });
         await _repository.SaveChangesAsync();
 
@@ -138,5 +148,22 @@ public class AuthService : IAuthService
         await _repository.SaveChangesAsync();
 
         return new AuthResult(accessToken, refreshTokenRaw, expiresAt, user.Name, user.Email);
+    }
+
+    private async Task<string?> TryRehostPictureAsync(string? googlePictureUrl)
+    {
+        if (string.IsNullOrEmpty(googlePictureUrl))
+            return null;
+
+        try
+        {
+            return await _cloudinaryService.UploadFromUrlAsync(googlePictureUrl, "profile-pictures");
+        }
+        catch
+        {
+            // Se o Cloudinary falhar por qualquer motivo, não quebra o login —
+            // só fica sem foto de perfil por enquanto, o usuário pode subir uma manualmente depois
+            return null;
+        }
     }
 }

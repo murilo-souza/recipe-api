@@ -6,6 +6,7 @@ public class ExternalLogin
     public int UserId { get; set; }
     public string Provider { get; set; } = string.Empty;
     public string ProviderUserId { get; set; } = string.Empty;
+    public string? PictureUrl { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 
     public User User { get; set; } = null!;
