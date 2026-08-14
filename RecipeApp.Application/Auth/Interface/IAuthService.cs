@@ -9,6 +9,9 @@ public interface IAuthService
     Task<(bool Success, string? Error, AuthResult? Result)> GoogleLoginAsync(GoogleLoginRequest request);
     Task<(bool Success, AuthResult? Result)> RefreshAsync(string rawRefreshToken);
     Task LogoutAsync(string rawRefreshToken);
+    Task ForgotPasswordAsync(ForgotPasswordRequest request);
+    Task<(bool Success, string? ResetToken)> VerifyResetCodeAsync(VerifyResetCodeRequest request);
+    Task<bool> ResetPasswordAsync(ResetPasswordRequest request);
 }
 
 // Carrega tudo que o Controller precisa pra montar a resposta HTTP (corpo + cookie)

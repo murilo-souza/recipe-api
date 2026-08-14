@@ -22,6 +22,7 @@ using RecipeApp.Infrastructure.Common;
 using RecipeApp.Infrastructure.Persistence;
 using RecipeApp.Infrastructure.Recipes;
 using RecipeApp.Infrastructure.Users;
+using Resend;
 using System.Text;
 
 
@@ -60,6 +61,15 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddOptions();
+builder.Services.Configure<ResendClientOptions>(o =>
+{
+    o.ApiToken = builder.Configuration["Resend:ApiKey"]!;
+});
+
+builder.Services.AddHttpClient<ResendClient>();
+builder.Services.AddTransient<IResend, ResendClient>();
+
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -78,12 +88,15 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IGoogleAuthValidator, GoogleAuthValidator>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IAuthService>(sp => new AuthService(
     sp.GetRequiredService<IAuthRepository>(),
     sp.GetRequiredService<ITokenService>(),
     sp.GetRequiredService<IGoogleAuthValidator>(),
     sp.GetRequiredService<ICloudinaryService>(),
+    sp.GetRequiredService<IEmailService>(),
     double.Parse(builder.Configuration["Jwt:RefreshTokenDays"]!)
 ));
 

@@ -68,6 +68,31 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+    {
+        await _authService.ForgotPasswordAsync(request);
+        return Ok(); // sempre 200, independente do resultado real
+    }
+
+    [HttpPost("verify-reset-code")]
+    public async Task<IActionResult> VerifyResetCode(VerifyResetCodeRequest request)
+    {
+        var (success, resetToken) = await _authService.VerifyResetCodeAsync(request);
+        if (!success) return BadRequest(new { error = "Código inválido ou expirado." });
+
+        return Ok(new VerifyResetCodeResponse(resetToken!));
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    {
+        var success = await _authService.ResetPasswordAsync(request);
+        if (!success) return BadRequest(new { error = "Não foi possível redefinir a senha." });
+
+        return NoContent();
+    }
+
     private AuthResponse BuildResponse(AuthResult result)
     {
         Response.Cookies.Append("refreshToken", result.RefreshTokenRaw, new CookieOptions
