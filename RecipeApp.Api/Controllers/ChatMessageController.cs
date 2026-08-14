@@ -64,6 +64,28 @@ public class ChatMessageController : ControllerBase
         }
     }
 
+    [HttpDelete]
+    public async Task<IActionResult> DeleteAllMessages(int recipeId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+            return Unauthorized(new { value = "Token inválido ou sem ID", statusCode = 401 });
+
+        try
+        {
+            await _chatMessageService.DeleteAllMessagesByRecipeIdAsync(userId.Value, recipeId);
+            return NoContent();
+        }
+        catch (RecipeNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenAccessException)
+        {
+            return NotFound();
+        }
+    }
+
     private int? GetUserId()
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
