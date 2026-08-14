@@ -7,4 +7,6 @@ public interface ITokenService
     string GenerateAccessToken(User user);
     string GenerateRefreshToken(); // token opaco, aleatório
     string HashToken(string token);
+    string GeneratePasswordResetToken(int userId);
+    int? ValidatePasswordResetToken(string token);
 }

@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<PrepareStep> PrepareSteps => Set<PrepareStep>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<PasswordResetCode> PasswordResetCodes => Set<PasswordResetCode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -118,6 +119,17 @@ public class AppDbContext : DbContext
             entity.HasOne(r => r.User)
                   .WithMany()
                   .HasForeignKey(r => r.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PasswordResetCode>(entity =>
+        {
+            entity.ToTable("password_reset_code");
+            entity.Property(p => p.CodeHash).HasMaxLength(255).IsRequired();
+
+            entity.HasOne(p => p.User)
+                  .WithMany()
+                  .HasForeignKey(p => p.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
     }

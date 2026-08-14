@@ -42,6 +42,18 @@ public class AuthRepository : IAuthRepository
         await Task.CompletedTask;
     }
 
+    public async Task AddPasswordResetCodeAsync(PasswordResetCode code)
+    => await _db.PasswordResetCodes.AddAsync(code);
+
+    public async Task<PasswordResetCode?> GetLatestValidResetCodeAsync(int userId, string codeHash)
+        => await _db.PasswordResetCodes
+            .Where(p => p.UserId == userId && p.CodeHash == codeHash)
+            .OrderByDescending(p => p.CreatedAt)
+            .FirstOrDefaultAsync();
+
+    public async Task<User?> GetUserByIdAsync(int userId)
+        => await _db.Users.SingleOrDefaultAsync(u => u.Id == userId);
+
     public async Task SaveChangesAsync()
         => await _db.SaveChangesAsync();
 }

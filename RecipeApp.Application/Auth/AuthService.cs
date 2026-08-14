@@ -11,6 +11,7 @@ public class AuthService : IAuthService
     private readonly ITokenService _tokenService;
     private readonly IGoogleAuthValidator _googleValidator;
     private readonly ICloudinaryService _cloudinaryService;
+    private readonly IEmailService _emailService;
     private readonly double _refreshTokenDays;
 
     public AuthService(
@@ -18,12 +19,14 @@ public class AuthService : IAuthService
         ITokenService tokenService,
         IGoogleAuthValidator googleValidator,
         ICloudinaryService cloudinaryService,
+        IEmailService emailService,
         double refreshTokenDays)
     {
         _repository = repository;
         _tokenService = tokenService;
         _googleValidator = googleValidator;
         _cloudinaryService = cloudinaryService;
+        _emailService = emailService;
         _refreshTokenDays = refreshTokenDays;
     }
 
@@ -131,6 +134,67 @@ public class AuthService : IAuthService
             await _repository.RemoveRefreshTokenAsync(stored);
             await _repository.SaveChangesAsync();
         }
+    }
+
+    public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
+    {
+        var user = await _repository.GetUserByEmailAsync(request.Email);
+
+        // Sempre "sucede" silenciosamente, mesmo se o usuário não existir —
+        // é o mesmo princípio de não vazar existência de conta
+        if (user is null) return;
+
+        var code = GenerateNumericCode(); // ex: "483920"
+        var codeHash = _tokenService.HashToken(code);
+
+        await _repository.AddPasswordResetCodeAsync(new PasswordResetCode
+        {
+            UserId = user.Id,
+            CodeHash = codeHash,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15)
+        });
+        await _repository.SaveChangesAsync();
+
+        await _emailService.SendPasswordResetCodeAsync(user.Email, user.Name, code);
+    }
+
+    public async Task<(bool Success, string? ResetToken)> VerifyResetCodeAsync(VerifyResetCodeRequest request)
+    {
+        var user = await _repository.GetUserByEmailAsync(request.Email);
+        if (user is null) return (false, null);
+
+        var codeHash = _tokenService.HashToken(request.Code);
+        var resetCode = await _repository.GetLatestValidResetCodeAsync(user.Id, codeHash);
+
+        if (resetCode is null || !resetCode.IsValid)
+            return (false, null);
+
+        resetCode.UsedAt = DateTimeOffset.UtcNow;
+        await _repository.SaveChangesAsync();
+
+        // Token temporário de curtíssima duração, só pra autorizar a troca de senha
+        var resetToken = _tokenService.GeneratePasswordResetToken(user.Id);
+        return (true, resetToken);
+    }
+
+    public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        var userId = _tokenService.ValidatePasswordResetToken(request.ResetToken);
+        if (userId is null) return false;
+
+        var user = await _repository.GetUserByIdAsync(userId.Value);
+        if (user is null) return false;
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        await _repository.SaveChangesAsync();
+
+        return true;
+    }
+
+    private static string GenerateNumericCode()
+    {
+        var random = System.Security.Cryptography.RandomNumberGenerator.GetInt32(0, 1_000_000);
+        return random.ToString("D6"); // sempre 6 dígitos, com zeros à esquerda se precisar
     }
 
     private async Task<AuthResult> IssueTokensAsync(User user)
