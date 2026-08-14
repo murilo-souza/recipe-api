@@ -72,6 +72,7 @@ public class TokenService : ITokenService
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Secret"]!));
         var handler = new JwtSecurityTokenHandler();
+        handler.MapInboundClaims = false;
 
         try
         {
