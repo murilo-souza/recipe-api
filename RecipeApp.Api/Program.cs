@@ -68,6 +68,7 @@ builder.Services.Configure<ResendClientOptions>(o =>
 });
 
 builder.Services.AddHttpClient<ResendClient>();
+builder.Services.AddHttpClient<IEmbeddingService, EmbeddingService>();
 builder.Services.AddTransient<IResend, ResendClient>();
 
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();

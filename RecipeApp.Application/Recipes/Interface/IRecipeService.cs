@@ -9,4 +9,5 @@ public interface IRecipeService
     Task DeleteRecipeAsync(int userId, int recipeId);
     Task<IEnumerable<RecipeSummaryResponse>> GetAllRecipesAsync(int userId);
     Task<RecipeResponse?> GetRecipeByIdAsync(int userId, int recipeId);
+    Task<int> BackfillEmbeddingsAsync(int userId);
 }

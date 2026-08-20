@@ -141,5 +141,19 @@ namespace RecipeApp.Api.Controllers
                 return NotFound(); // devolve 404 também, não 403 — não vaza que o ID existe
             }
         }
+
+        [Authorize]
+        [HttpPost("backfill-embeddings")]
+        public async Task<IActionResult> BackfillEmbeddings()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdStr, out int userId))
+            {
+                return Unauthorized(new { value = "Token inválido ou sem ID", statusCode = 401 });
+            }
+
+            var count = await _recipeService.BackfillEmbeddingsAsync(userId);
+            return Ok(new { updated = count });
+        }
     }
 }
