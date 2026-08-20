@@ -68,6 +68,7 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasIndex(r => r.UserId);
+            entity.Property(r => r.Embedding).HasColumnType("vector(768)");
         });
 
         modelBuilder.Entity<Ingredient>(entity =>

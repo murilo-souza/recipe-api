@@ -1,4 +1,7 @@
 ﻿using RecipeApp.Domain.Common;
+using System.Numerics;
+using PgVector = Pgvector.Vector;
+
 
 namespace RecipeApp.Domain.Entities;
 
@@ -10,6 +13,7 @@ public class Recipe : IAuditable
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? Image { get; set; }
+    public PgVector? Embedding { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 
