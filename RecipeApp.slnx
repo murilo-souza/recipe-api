@@ -3,4 +3,5 @@
   <Project Path="RecipeApp.Application/RecipeApp.Application.csproj" />
   <Project Path="RecipeApp.Domain/RecipeApp.Domain.csproj" />
   <Project Path="RecipeApp.Infrastructure/RecipeApp.Infrastructure.csproj" />
+  <Project Path="RecipeApp.McpServer/RecipeApp.McpServer.csproj" Id="d5a77769-21fe-4eb7-bfb8-661e770d55c2" />
 </Solution>
