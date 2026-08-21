@@ -24,7 +24,8 @@ public class EmbeddingService : IEmbeddingService
         var payload = new
         {
             content = new { parts = new[] { new { text } } },
-            outputDimensionality = 768
+            outputDimensionality = 768,
+            taskType = "RETRIEVAL_DOCUMENT"
         };
 
         var jsonPayload = JsonSerializer.Serialize(payload);

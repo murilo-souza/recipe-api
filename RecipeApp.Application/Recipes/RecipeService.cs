@@ -182,8 +182,10 @@ public class RecipeService : IRecipeService
     {
         var ingredients = string.Join(", ", recipe.Ingredients.Select(i => i.Description));
         var steps = string.Join(". ", recipe.PrepareSteps.OrderBy(p => p.Position).Select(p => p.Description));
+        var categoryName = recipe.Category?.Name ?? "";
 
         return $"""
+        Esta é uma receita da categoria {categoryName}.
         Título: {recipe.Title}
         Descrição: {recipe.Description}
         Ingredientes: {ingredients}

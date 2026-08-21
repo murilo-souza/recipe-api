@@ -32,17 +32,18 @@ public class RecipeTools
         if (queryEmbedding is null)
             return "Não foi possível processar a busca no momento.";
 
+
         var recipes = await _db.Recipes
             .Where(r => r.UserId == userId && r.Embedding != null)
             .OrderBy(r => r.Embedding!.CosineDistance(queryEmbedding))
             .Take(limit)
-            .Select(r => new { r.Id, r.Title, r.Description })
+            .Select(r => new { r.Id, r.Title, r.Description, r.Category })
             .ToListAsync();
 
         if (recipes.Count == 0)
             return "Nenhuma receita encontrada.";
 
-        return string.Join("\n", recipes.Select(r => $"- {r.Title} (id {r.Id}): {r.Description}"));
+        return string.Join("\n", recipes.Select(r => $"- {r.Title} (id {r.Id}): {r.Description} {r.Category.Name}"));
     }
 
     [McpServerTool, Description("Busca receitas de um usuário que NÃO contêm um ingrediente específico, ou filtra por categoria. Use para perguntas exatas, tipo 'quais receitas não têm queijo' ou 'quantas receitas de sobremesa eu tenho'.")]
@@ -71,7 +72,8 @@ public class RecipeTools
         var payload = new
         {
             content = new { parts = new[] { new { text } } },
-            outputDimensionality = 768
+            outputDimensionality = 768,
+            taskType = "RETRIEVAL_QUERY"
         };
 
         var request = new HttpRequestMessage(HttpMethod.Post,

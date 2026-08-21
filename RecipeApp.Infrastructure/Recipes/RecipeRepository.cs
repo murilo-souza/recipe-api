@@ -45,6 +45,7 @@ public class RecipeRepository : IRecipeRepository
         return await _db.Recipes
             .Include(r => r.Ingredients)
             .Include(r => r.PrepareSteps)
+            .Include(r=>r.Category)
             .Where(r => r.UserId == userId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync();
