@@ -6,6 +6,8 @@ using RecipeApp.Application.Auth;
 using RecipeApp.Application.Auth.Interface;
 using RecipeApp.Application.Categories;
 using RecipeApp.Application.Categories.Interface;
+using RecipeApp.Application.Chat;
+using RecipeApp.Application.Chat.Interface;
 using RecipeApp.Application.ChatMessages;
 using RecipeApp.Application.ChatMessages.Interface;
 using RecipeApp.Application.Common.Interface;
@@ -17,6 +19,7 @@ using RecipeApp.Application.Users;
 using RecipeApp.Application.Users.Interface;
 using RecipeApp.Infrastructure.Auth;
 using RecipeApp.Infrastructure.Categories;
+using RecipeApp.Infrastructure.Chat;
 using RecipeApp.Infrastructure.ChatMessages;
 using RecipeApp.Infrastructure.Common;
 using RecipeApp.Infrastructure.Persistence;
@@ -70,8 +73,12 @@ builder.Services.Configure<ResendClientOptions>(o =>
 builder.Services.AddHttpClient<ResendClient>();
 builder.Services.AddHttpClient<IEmbeddingService, EmbeddingService>();
 builder.Services.AddTransient<IResend, ResendClient>();
+builder.Services.AddHttpClient<IAgenticChatService, AgenticChatService>();
 
 builder.Services.AddHttpClient<IGeminiService, GeminiService>();
+
+builder.Services.AddScoped<IGeneralChatRepository, GeneralChatRepository>();
+builder.Services.AddScoped<IGeneralChatService, GeneralChatService>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();

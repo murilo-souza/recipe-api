@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using RecipeApp.Application.Gemini.Interface;
 using RecipeApp.Domain.Entities;
-using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 
@@ -12,7 +10,7 @@ namespace RecipeApp.Application.Gemini
     {
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
-        private const string GeminiApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
+        private const string GeminiApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent";
 
         public GeminiService(HttpClient httpClient, IConfiguration configuration)
         {
