@@ -58,13 +58,20 @@ public class RecipeTools
     [McpServerTool, Description("Busca receitas de um usuário que NÃO contêm um ingrediente específico, ou filtra por categoria. Use para perguntas exatas, tipo 'quais receitas não têm queijo' ou 'quantas receitas de sobremesa eu tenho'.")]
     public async Task<string> SearchRecipesExcludingIngredient(
         [Description("O userId do dono das receitas")] int userId,
-        [Description("Ingrediente a excluir, ou vazio para não filtrar")] string? excludeIngredient = null)
+        [Description("Ingrediente a excluir, ou vazio para não filtrar")] string? excludeIngredient = null,
+        [Description("Nome da categoria para filtrar (ex: 'Sobremesa', 'Salgado'), ou vazio para não filtrar por categoria")] string? categoryName = null)
     {
+
         var query = _db.Recipes.Where(r => r.UserId == userId);
 
         if (!string.IsNullOrWhiteSpace(excludeIngredient))
         {
             query = query.Where(r => !r.Ingredients.Any(i => EF.Functions.ILike(i.Description, $"%{excludeIngredient}%")));
+        }
+
+        if(!string.IsNullOrWhiteSpace(categoryName))
+        {
+            query = query.Where(r => r.Category != null && EF.Functions.ILike(r.Category.Name, $"%{categoryName}%"));
         }
 
         var recipes = await query.Select(r => new { r.Id, r.Title }).ToListAsync();
