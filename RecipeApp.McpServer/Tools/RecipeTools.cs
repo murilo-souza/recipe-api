@@ -59,7 +59,7 @@ public class RecipeTools
     public async Task<string> SearchRecipesExcludingIngredient(
         [Description("O userId do dono das receitas")] int userId,
         [Description("Ingrediente a excluir, ou vazio para não filtrar")] string? excludeIngredient = null,
-        [Description("Nome da categoria para filtrar (ex: 'Sobremesa', 'Salgado'), ou vazio para não filtrar por categoria")] string? categoryName = null)
+        [Description("Filtra receitas por categoria EXATA já cadastrada pelo usuário (ex: 'Sobremesa', 'Salgado') ou excluindo um ingrediente específico. Use SÓ quando o usuário mencionar a categoria explicitamente ou pedir exclusão de ingrediente. Para perguntas sobre sabor, textura ou características gerais (tipo 'algo doce', 'picante', 'leve'), prefira a busca semântica.")] string? categoryName = null)
     {
 
         var query = _db.Recipes.Where(r => r.UserId == userId);
