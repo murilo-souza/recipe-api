@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<PasswordResetCode> PasswordResetCodes => Set<PasswordResetCode>();
+    public DbSet<GeneralChatMessage> GeneralChatMessages => Set<GeneralChatMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -109,6 +110,20 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(c => c.RecipeId);
+        });
+
+        modelBuilder.Entity<GeneralChatMessage>(entity =>
+        {
+            entity.ToTable("general_chat_message");
+            entity.Property(c => c.Content).IsRequired();
+            entity.Property(c => c.Role).HasConversion<string>().HasMaxLength(20);
+
+            entity.HasOne(c => c.User)
+                  .WithMany()
+                  .HasForeignKey(c => c.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(c => c.UserId);
         });
 
         modelBuilder.Entity<RefreshToken>(entity =>

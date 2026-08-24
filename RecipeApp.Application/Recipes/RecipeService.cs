@@ -1,4 +1,5 @@
 ﻿using RecipeApp.Application.Common.Exceptions;
+using RecipeApp.Application.Common.Interface;
 using RecipeApp.Application.Recipes.DTO;
 using RecipeApp.Application.Recipes.Interface;
 using RecipeApp.Domain.Entities;
@@ -8,10 +9,12 @@ namespace RecipeApp.Application.Recipes;
 public class RecipeService : IRecipeService
 {
     private readonly IRecipeRepository _repository;
+    private readonly IEmbeddingService _embeddingService;
 
-    public RecipeService(IRecipeRepository repository)
+    public RecipeService(IRecipeRepository repository, IEmbeddingService embeddingService)
     {
         _repository = repository;
+        _embeddingService = embeddingService;
     }
 
     public async Task<IEnumerable<RecipeSummaryResponse>> GetAllRecipesAsync(int userId)
@@ -70,6 +73,8 @@ public class RecipeService : IRecipeService
                 .ToList()
         };
 
+        await TryAttachEmbeddingAsync(recipe);
+
         await _repository.AddAsync(recipe);
         await _repository.SaveChangesAsync();
 
@@ -121,6 +126,8 @@ public class RecipeService : IRecipeService
             })
             .ToList();
 
+        await TryAttachEmbeddingAsync(recipe);
+
         await _repository.SaveChangesAsync();
     }
 
@@ -136,5 +143,53 @@ public class RecipeService : IRecipeService
 
         await _repository.RemoveAsync(recipe);
         await _repository.SaveChangesAsync();
+    }
+
+    public async Task<int> BackfillEmbeddingsAsync(int userId)
+    {
+        var recipes = await _repository.GetAllByUserIdWithDetailsAsync(userId); // precisa incluir Ingredients/PrepareSteps
+        var updated = 0;
+
+        foreach (var recipe in recipes.Where(r => r.Embedding is null))
+        {
+            await TryAttachEmbeddingAsync(recipe);
+            if (recipe.Embedding is not null) updated++;
+        }
+
+        await _repository.SaveChangesAsync();
+        return updated;
+    }
+
+    private async Task TryAttachEmbeddingAsync(Recipe recipe)
+    {
+        try
+        {
+            var text = BuildEmbeddingText(recipe);
+            var values = await _embeddingService.GenerateEmbeddingAsync(text);
+
+            if (values is not null)
+                recipe.Embedding = new Pgvector.Vector(values);
+        }
+        catch
+        {
+            // Se o Gemini falhar (rate limit, fora do ar), não bloqueia o
+            // Create/Update — a receita salva sem embedding, e pode ser
+            // gerado depois via backfill
+        }
+    }
+
+    private static string BuildEmbeddingText(Recipe recipe)
+    {
+        var ingredients = string.Join(", ", recipe.Ingredients.Select(i => i.Description));
+        var steps = string.Join(". ", recipe.PrepareSteps.OrderBy(p => p.Position).Select(p => p.Description));
+        var categoryName = recipe.Category?.Name ?? "";
+
+        return $"""
+        Esta é uma receita da categoria {categoryName}.
+        Título: {recipe.Title}
+        Descrição: {recipe.Description}
+        Ingredientes: {ingredients}
+        Modo de preparo: {steps}
+        """;
     }
 }

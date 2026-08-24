@@ -10,7 +10,10 @@ public interface IRecipeRepository
 
     Task<Recipe?> GetByIdAsync(int recipeId);
     Task<IEnumerable<Recipe>> GetAllByUserIdAsync(int userId);
+    Task<IEnumerable<Recipe>> GetAllByUserIdWithDetailsAsync(int userId);
     Task SaveChangesAsync();
+
+
     void RemoveIngredients(IEnumerable<Ingredient> ingredients);
     void RemovePrepareSteps(IEnumerable<PrepareStep> prepareSteps);
 }

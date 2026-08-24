@@ -40,6 +40,17 @@ public class RecipeRepository : IRecipeRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Recipe>> GetAllByUserIdWithDetailsAsync(int userId)
+    {
+        return await _db.Recipes
+            .Include(r => r.Ingredients)
+            .Include(r => r.PrepareSteps)
+            .Include(r=>r.Category)
+            .Where(r => r.UserId == userId)
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+    }
+
     public void RemoveIngredients(IEnumerable<Ingredient> ingredients)
     {
         _db.Ingredients.RemoveRange(ingredients);
