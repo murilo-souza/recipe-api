@@ -21,5 +21,12 @@ public class GeneralChatRepository : IGeneralChatRepository
     public async Task AddAsync(GeneralChatMessage message)
         => await _db.GeneralChatMessages.AddAsync(message);
 
+    public async Task DeleteAllByUserIdAsync(int userId)
+    {
+        await _db.GeneralChatMessages
+            .Where(m => m.UserId == userId)
+            .ExecuteDeleteAsync();
+    }
+
     public async Task SaveChangesAsync() => await _db.SaveChangesAsync();
 }

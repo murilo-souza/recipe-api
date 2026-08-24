@@ -34,6 +34,16 @@ public class GeneralChatController : ControllerBase
         return Ok(history);
     }
 
+    [HttpDelete]
+    public async Task<IActionResult> ClearHistory()
+    {
+        var userId = GetUserId();
+        if (userId is null) return Unauthorized();
+
+        await _service.ClearHistoryAsync(userId.Value);
+        return NoContent();
+    }
+
     private int? GetUserId()
     {
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);

@@ -55,6 +55,11 @@ public class GeneralChatService : IGeneralChatService
         return new GeneralChatMessageResponse(aiMessage.Id, aiMessage.Role.ToString(), aiMessage.Content, aiMessage.CreatedAt);
     }
 
+    public async Task ClearHistoryAsync(int userId)
+    {
+        await _repository.DeleteAllByUserIdAsync(userId);
+    }
+
     public async Task<IEnumerable<GeneralChatMessageResponse>> GetHistoryAsync(int userId)
     {
         var messages = await _repository.GetByUserIdAsync(userId);
