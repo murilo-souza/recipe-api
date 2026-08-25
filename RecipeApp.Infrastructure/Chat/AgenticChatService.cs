@@ -3,6 +3,7 @@ using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using RecipeApp.Application.Chat.DTO;
 using RecipeApp.Application.Chat.Interface;
+using RecipeApp.Infrastructure.Common;
 using System.Text;
 using System.Text.Json;
 
@@ -114,19 +115,11 @@ public class AgenticChatService : IAgenticChatService
             tools = new[] { new { function_declarations = functionDeclarations } }
         };
 
-        var apiKey = _config["Gemini:ApiKey"];
-        using var request = new HttpRequestMessage(HttpMethod.Post, GeminiApiUrl);
-        request.Headers.Add("x-goog-api-key", apiKey);
-        request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+        var apiKey = _config["Gemini:ApiKey"]!;
+        var jsonPayload = JsonSerializer.Serialize(payload);
 
-        var response = await _httpClient.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
-        {
-            var errorBody = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Gemini API error ({response.StatusCode}): {errorBody}");
-        }
+        var responseString = await GeminiHttpHelper.SendWithRetryAsync(_httpClient, GeminiApiUrl, apiKey, jsonPayload);
 
-        var responseString = await response.Content.ReadAsStringAsync();
         return JsonDocument.Parse(responseString);
     }
 

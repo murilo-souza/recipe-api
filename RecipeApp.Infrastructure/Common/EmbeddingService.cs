@@ -30,24 +30,22 @@ public class EmbeddingService : IEmbeddingService
 
         var jsonPayload = JsonSerializer.Serialize(payload);
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, EmbeddingApiUrl);
-        request.Headers.Add("x-goog-api-key", _apiKey);
-        request.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+        try
+        {
+            var responseString = await GeminiHttpHelper.SendWithRetryAsync(_httpClient, EmbeddingApiUrl, _apiKey, jsonPayload);
+            using var document = JsonDocument.Parse(responseString);
 
-        var response = await _httpClient.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
+            var values = document.RootElement
+                .GetProperty("embedding")
+                .GetProperty("values")
+                .EnumerateArray()
+                .Select(v => v.GetSingle())
+                .ToArray();
+
+            return values;
+        } catch
+        {
             return null;
-
-        var responseString = await response.Content.ReadAsStringAsync();
-        using var document = JsonDocument.Parse(responseString);
-
-        var values = document.RootElement
-            .GetProperty("embedding")
-            .GetProperty("values")
-            .EnumerateArray()
-            .Select(v => v.GetSingle())
-            .ToArray();
-
-        return values;
+        }
     }
 }

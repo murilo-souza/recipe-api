@@ -1,10 +1,11 @@
 ﻿using Microsoft.Extensions.Configuration;
 using RecipeApp.Application.Gemini.Interface;
 using RecipeApp.Domain.Entities;
+using RecipeApp.Infrastructure.Common;
 using System.Text;
 using System.Text.Json;
 
-namespace RecipeApp.Application.Gemini
+namespace RecipeApp.Infrastructure.Gemini
 {
     public class GeminiService: IGeminiService
     {
@@ -61,10 +62,8 @@ namespace RecipeApp.Application.Gemini
             requestMessage.Headers.Add("x-goog-api-key", _apiKey);
             requestMessage.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.SendAsync(requestMessage);
-            response.EnsureSuccessStatusCode();
+            var responseString = await GeminiHttpHelper.SendWithRetryAsync(_httpClient, GeminiApiUrl, _apiKey, jsonPayload);
 
-            var responseString = await response.Content.ReadAsStringAsync();
             using var document = JsonDocument.Parse(responseString);
 
             return document.RootElement
