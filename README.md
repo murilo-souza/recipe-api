@@ -135,8 +135,8 @@ dotnet ef migrations add NomeDaMigration --project RecipeApp.Infrastructure --st
 | Recurso | Rota base | Principais ações |
 |---|---|---|
 | Auth | `/api/auth` | `register`, `login`, `google`, `refresh`, `logout`, `forgot-password`, `verify-reset-code`, `reset-password` |
-| Receitas | `/api/recipes` | `GET`, `GET /{id}`, `POST /create`, `PUT /{id}`, `DELETE /{id}` |
-| Categorias | `/api/categories` | `GET` |
+| Receitas | `/api/recipe` | `GET /get-all-recipes`, `GET /get-recipe-by-id?recipeId={id}`, `POST /create`, `PUT /update?recipeId={id}`, `DELETE /delete?recipe={id}`, `POST /backfill-embeddings` |
+| Categorias | `/api/categories` | `GET /get-all` |
 | Usuário | `/api/users` | `GET /me`, `PUT /me` |
 | Chat da receita | `/api/recipes/{recipeId}/messages` | `GET`, `POST`, `DELETE` |
 | Chat geral (agentic) | `/api/chat/general` | `GET`, `POST`, `DELETE` |
