@@ -52,58 +52,53 @@ public class AgenticChatService : IAgenticChatService
             contents.Add(new { role = turn.Role, parts = new[] { new { text = turn.Content } } });
         contents.Add(new { role = "user", parts = new[] { new { text = userMessage } } });
 
-        // 3. Primeira chamada ao Gemini, com as tools declaradas
-        var firstResponse = await CallGeminiAsync(systemInstruction, contents, functionDeclarations);
-        var candidate = firstResponse.RootElement.GetProperty("candidates")[0].GetProperty("content");
-        var parts = candidate.GetProperty("parts");
+        const int maxIterations = 5;
 
-        var functionCallPart = parts.EnumerateArray().FirstOrDefault(p => p.TryGetProperty("functionCall", out _));
-
-        // 4a. Se o modelo respondeu com texto direto, devolve
-        if (functionCallPart.ValueKind == JsonValueKind.Undefined)
+        for (int i = 0; i < maxIterations; i++)
         {
-            return parts[0].GetProperty("text").GetString() ?? "Não consegui gerar uma resposta.";
+            var responseDoc = await CallGeminiAsync(systemInstruction, contents, functionDeclarations);
+
+            if (!responseDoc.RootElement.TryGetProperty("candidates", out var candidatesEl) || candidatesEl.GetArrayLength() == 0)
+                return "Não consegui gerar uma resposta no momento.";
+
+            var candidate = candidatesEl[0];
+
+            if (!candidate.TryGetProperty("content", out var contentEl) || !contentEl.TryGetProperty("parts", out var partsEl))
+                return "Não consegui gerar uma resposta no momento."; // ex: bloqueado por safety, sem content
+
+            var functionCallPart = partsEl.EnumerateArray().FirstOrDefault(p => p.TryGetProperty("functionCall", out _));
+
+            // Sem tool call nessa resposta: procura o texto (sem assumir que é sempre parts[0])
+            if (functionCallPart.ValueKind == JsonValueKind.Undefined)
+            {
+                var textPart = partsEl.EnumerateArray().FirstOrDefault(p => p.TryGetProperty("text", out _));
+                if (textPart.ValueKind != JsonValueKind.Undefined)
+                    return textPart.GetProperty("text").GetString() ?? "Não consegui gerar uma resposta.";
+
+                return "Não consegui gerar uma resposta no momento.";
+            }
+
+            // Tem tool call: executa, adiciona ao histórico, e volta pro início do loop
+            var functionCall = functionCallPart.GetProperty("functionCall");
+            var toolName = functionCall.GetProperty("name").GetString()!;
+            var argsJson = functionCall.GetProperty("args");
+            var arguments = JsonSerializer.Deserialize<Dictionary<string, object?>>(argsJson.GetRawText())!;
+
+            var toolResult = await mcpClient.CallToolAsync(toolName, arguments);
+            var toolResultText = string.Join("\n", toolResult.Content.OfType<TextContentBlock>().Select(c => c.Text));
+
+            contents.Add(new { role = "model", parts = new[] { functionCallPart } });
+            contents.Add(new
+            {
+                role = "user",
+                parts = new[]
+                {
+                new { functionResponse = new { name = toolName, response = new { result = toolResultText } } }
+            }
+            });
         }
 
-        // 4b. Se o modelo pediu pra chamar uma tool
-        var functionCall = functionCallPart.GetProperty("functionCall");
-        var toolName = functionCall.GetProperty("name").GetString()!;
-        var argsJson = functionCall.GetProperty("args");
-
-        var arguments = JsonSerializer.Deserialize<Dictionary<string, object?>>(argsJson.GetRawText())!;
-
-        var toolResult = await mcpClient.CallToolAsync(toolName, arguments);
-        var toolResultText = string.Join("\n", toolResult.Content
-         .OfType<TextContentBlock>()
-         .Select(c => c.Text));
-
-        // 5. Manda o resultado da tool de volta pro Gemini, pra formular a resposta final
-        contents.Add(new { role = "model", parts = new[] { functionCallPart } });
-        contents.Add(new
-        {
-            role = "user",
-            parts = new[]
-            {
-                new
-                {
-                    functionResponse = new
-                    {
-                        name = toolName,
-                        response = new { result = toolResultText }
-                    }
-                }
-            }
-        });
-
-        var finalResponse = await CallGeminiAsync(systemInstruction, contents, functionDeclarations);
-        var finalText = finalResponse.RootElement
-            .GetProperty("candidates")[0]
-            .GetProperty("content")
-            .GetProperty("parts")[0]
-            .GetProperty("text")
-            .GetString();
-
-        return finalText ?? "Não consegui gerar uma resposta.";
+        return "Não consegui concluir sua solicitação após várias tentativas.";
     }
 
     private async Task<JsonDocument> CallGeminiAsync(object systemInstruction, List<object> contents, IEnumerable<object> functionDeclarations)
