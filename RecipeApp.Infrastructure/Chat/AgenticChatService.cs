@@ -64,7 +64,7 @@ public class AgenticChatService : IAgenticChatService
             var candidate = candidatesEl[0];
 
             if (!candidate.TryGetProperty("content", out var contentEl) || !contentEl.TryGetProperty("parts", out var partsEl))
-                return "Não consegui gerar uma resposta no momento."; // ex: bloqueado por safety, sem content
+                return "Não consegui gerar uma resposta no momento."; 
 
             var functionCallPart = partsEl.EnumerateArray().FirstOrDefault(p => p.TryGetProperty("functionCall", out _));
 
