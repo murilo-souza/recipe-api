@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using RecipeApp.Application.Auth;
+using Microsoft.AspNetCore.RateLimiting;
 using RecipeApp.Application.Auth.DTO;
 using RecipeApp.Application.Auth.Interface;
 
@@ -16,6 +16,7 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
+    [EnableRateLimiting("auth")]
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
@@ -25,6 +26,7 @@ public class AuthController : ControllerBase
         return Ok(BuildResponse(result!));
     }
 
+    [EnableRateLimiting("auth")]
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
@@ -36,6 +38,7 @@ public class AuthController : ControllerBase
         return Ok(BuildResponse(result!));
     }
 
+    [EnableRateLimiting("auth")]
     [HttpPost("google")]
     public async Task<IActionResult> GoogleLogin(GoogleLoginRequest request)
     {
@@ -45,6 +48,7 @@ public class AuthController : ControllerBase
         return Ok(BuildResponse(result!));
     }
 
+    [EnableRateLimiting("auth")]
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh()
     {
@@ -68,6 +72,7 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
+    [EnableRateLimiting("auth")]
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
     {
@@ -75,6 +80,7 @@ public class AuthController : ControllerBase
         return Ok(); // sempre 200, independente do resultado real
     }
 
+    [EnableRateLimiting("auth")]
     [HttpPost("verify-reset-code")]
     public async Task<IActionResult> VerifyResetCode(VerifyResetCodeRequest request)
     {
@@ -84,6 +90,7 @@ public class AuthController : ControllerBase
         return Ok(new VerifyResetCodeResponse(resetToken!));
     }
 
+    [EnableRateLimiting("auth")]
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
     {
