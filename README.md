@@ -149,14 +149,6 @@ Documentação completa e testável em `/swagger` com a API rodando localmente.
 - O CORS na API principal está configurado para aceitar requisições do domínio do frontend (Vercel), com `AllowCredentials` habilitado.
 - **Nota sobre free tier**: ambos os serviços "dormem" após inatividade — a primeira requisição depois de um período ocioso pode levar de 30 a 60 segundos para responder (cold start), potencialmente em cascata se os dois estiverem inativos ao mesmo tempo.
 
-## TODO
-
-- [ ] 2FA (a infraestrutura de código temporário + hash + expiração já existe, reaproveitada do fluxo de reset de senha)
-- [ ] Busca de receitas por texto simples (fora do chat)
-- [ ] Compartilhar receita via PDF
-- [ ] Compartilhar receita via link/app
-- [ ] Tool MCP adicional: criar receita diretamente pelo chat
-
 ## Decisões de arquitetura
 
 - **Clean Architecture** para manter regras de negócio isoladas de detalhes de infraestrutura (banco, providers externos), facilitando testes e troca de tecnologia em qualquer camada externa.
