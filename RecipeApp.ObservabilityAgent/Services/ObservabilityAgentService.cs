@@ -8,11 +8,13 @@ public class ObservabilityAgentService
 {
     private readonly ILogAnalyticsService _logAnalytics;
     private readonly IGeminiAnalysisService _gemini;
+    private readonly IEmailNotificationService _email;
 
-    public ObservabilityAgentService(ILogAnalyticsService logAnalytics, IGeminiAnalysisService gemini)
+    public ObservabilityAgentService(ILogAnalyticsService logAnalytics, IGeminiAnalysisService gemini, IEmailNotificationService email)
     {
         _logAnalytics = logAnalytics;
         _gemini = gemini;
+        _email = email;
     }
 
     public async Task<string> RunAnalysisAsync(TimeSpan lookback)
@@ -20,8 +22,14 @@ public class ObservabilityAgentService
         var logs = await _logAnalytics.QueryRecentLogsAsync(lookback);
 
         if (!logs.Any())
-            return "Nenhum log encontrado no período analisado.";
+        {
+            var noLogsMessage = "Nenhum log encontrado no período analisado.";
+            await _email.SendAsync("Relatório de Observabilidade — RecipeApp", noLogsMessage);
+            return noLogsMessage;
+        }
 
-        return await _gemini.AnalyzeAsync(logs);
+        var analysis = await _gemini.AnalyzeAsync(logs);
+        await _email.SendAsync("Relatório de Observabilidade — RecipeApp", analysis);
+        return analysis;
     }
 }
