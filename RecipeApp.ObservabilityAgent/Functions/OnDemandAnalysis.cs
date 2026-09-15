@@ -1,23 +1,26 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using RecipeApp.ObservabilityAgent.Services;
+using System.Net;
 
 namespace RecipeApp.ObservabilityAgent.Functions;
 
 public class OnDemandAnalysis
 {
-    private readonly ILogger<OnDemandAnalysis> _logger;
-
-    public OnDemandAnalysis(ILogger<OnDemandAnalysis> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ObservabilityAgentService _agent;
+    public OnDemandAnalysis(ObservabilityAgentService agent) => _agent = agent;
 
     [Function("OnDemandAnalysis")]
-    public IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequest req)
+    public async Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req)
     {
-        _logger.LogInformation("C# HTTP trigger function processed a request.");
-        return new OkObjectResult("Welcome to Azure Functions!");
+        var result = await _agent.RunAnalysisAsync(TimeSpan.FromHours(1));
+        var response = req.CreateResponse(HttpStatusCode.OK);
+        response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+        await response.WriteStringAsync(result);
+        return response;
     }
 }

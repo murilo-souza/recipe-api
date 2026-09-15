@@ -1,14 +1,15 @@
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using RecipeApp.ObservabilityAgent.Services;
 
-var builder = FunctionsApplication.CreateBuilder(args);
+var host = new HostBuilder()
+    .ConfigureFunctionsWebApplication()
+    .ConfigureServices(services =>
+    {
+        services.AddSingleton<ILogAnalyticsService, LogAnalyticsService>();
+        services.AddHttpClient<IGeminiAnalysisService, GeminiAnalysisService>();
+        services.AddSingleton<ObservabilityAgentService>();
+    })
+    .Build();
 
-builder.ConfigureFunctionsWebApplication();
-
-builder.Services
-    .AddApplicationInsightsTelemetryWorkerService()
-    .ConfigureFunctionsApplicationInsights();
-
-builder.Build().Run();
+host.Run();

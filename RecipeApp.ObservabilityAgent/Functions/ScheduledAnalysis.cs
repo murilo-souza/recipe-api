@@ -1,26 +1,20 @@
-using System;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using RecipeApp.ObservabilityAgent.Services;
+using System;
+using System.Threading.Tasks;
 
 namespace RecipeApp.ObservabilityAgent.Functions;
 
 public class ScheduledAnalysis
 {
-    private readonly ILogger _logger;
-
-    public ScheduledAnalysis(ILoggerFactory loggerFactory)
-    {
-        _logger = loggerFactory.CreateLogger<ScheduledAnalysis>();
-    }
+    private readonly ObservabilityAgentService _agent;
+    public ScheduledAnalysis(ObservabilityAgentService agent) => _agent = agent;
 
     [Function("ScheduledAnalysis")]
-    public void Run([TimerTrigger("0 */5 * * * *")] TimerInfo myTimer)
+    public async Task Run([TimerTrigger("0 */30 * * * *")] TimerInfo timer)
     {
-        _logger.LogInformation("C# Timer trigger function executed at: {executionTime}", DateTime.Now);
-        
-        if (myTimer.ScheduleStatus is not null)
-        {
-            _logger.LogInformation("Next timer schedule at: {nextSchedule}", myTimer.ScheduleStatus.Next);
-        }
+        var result = await _agent.RunAnalysisAsync(TimeSpan.FromMinutes(30));
+        // TODO: publicar no Teams/Slack
     }
 }
