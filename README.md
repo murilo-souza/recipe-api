@@ -23,11 +23,12 @@ O projeto é dividido em **cinco projetos** na mesma solution, dois deles public
 
 ```
 RecipeApp.slnx
-├── RecipeApp.Domain          # Entidades puras, sem dependência de framework
-├── RecipeApp.Application     # Regras de negócio: Services, DTOs, interfaces (contratos)
-├── RecipeApp.Infrastructure  # Implementações concretas: EF Core, repositórios, integrações externas
-├── RecipeApp.Api             # Serviço 1 — Controllers REST, autenticação, Swagger
-└── RecipeApp.McpServer       # Serviço 2 — servidor MCP com as ferramentas de busca
+├── RecipeApp.Domain                # Entidades puras, sem dependência de framework
+├── RecipeApp.Application           # Regras de negócio: Services, DTOs, interfaces (contratos)
+├── RecipeApp.Infrastructure        # Implementações concretas: EF Core, repositórios, integrações externas
+├── RecipeApp.Api                   # Serviço 1 — Controllers REST, autenticação, Swagger
+├── RecipeApp.McpServer             # Serviço 2 — servidor MCP com as ferramentas de busca
+└── RecipeApp.ObservabilityAgent    # Serviço 3 — agente de IA para observabilidade dos outros dois
 ```
 
 **Fluxo de dependência (Clean Architecture):** `Api`/`McpServer` → `Application` → `Domain`, com `Infrastructure` implementando as interfaces definidas em `Application`. O `Domain` não depende de nenhuma outra camada — a regra é garantida pelo compilador via `ProjectReference`, não só por convenção.
@@ -56,6 +57,36 @@ O `RecipeApp.Api` atua como **client MCP**: a cada mensagem do chat geral, ele d
 **Por que dois serviços separados, no mesmo repositório:** o MCP server roda como processo e deploy independentes (comunicação via HTTP real, protocolo MCP completo), mas compartilha `Domain`/`Infrastructure` com a API principal via referência de projeto — evitando duplicar entidades e configuração de banco entre dois repositórios.
 
 O chat **por receita** (`/api/recipes/{id}/messages`) é mais simples por design: injeta o contexto da receita diretamente no prompt, sem passar por ferramentas — usado quando a pergunta já tem escopo definido (uma receita específica).
+
+### Observabilidade com IA
+ 
+O `RecipeApp.ObservabilityAgent` é um agente de IA que monitora os logs reais da API e do MCP server em produção, correlaciona eventos e devolve um diagnóstico em linguagem natural — em vez de exigir que alguém garimpe logs brutos manualmente.
+ 
+```
+Azure Container Apps (Api, McpServer) → stdout/stderr → Log Analytics Workspace
+                                                                ↓
+                                        RecipeApp.ObservabilityAgent (Azure Function)
+                                                                ↓
+                                    Consulta via KQL → Gemini (análise de causa raiz) → Resend (e-mail)
+```
+ 
+O agente é **puramente analítico**: ele lê e diagnostica, mas nunca altera a infraestrutura (sem auto-scaling, sem restart automático, sem qualquer ação corretiva). Essa é uma escolha deliberada de design — o valor nessa fase está em acelerar o diagnóstico humano, não em automação de remediação sem supervisão.
+ 
+**Dois triggers, uma única lógica de negócio:**
+ 
+| Function | Trigger | Uso |
+|---|---|---|
+| `ScheduledAnalysis` | Timer Trigger (cron, a cada 30 min) | Monitoramento contínuo, sem intervenção manual |
+| `OnDemandAnalysis` | HTTP Trigger | Disparo manual para investigação imediata |
+ 
+Ambas delegam para o mesmo `ObservabilityAgentService`, que orquestra três serviços injetados via DI:
+ 
+- **`ILogAnalyticsService`** — consulta o Log Analytics Workspace via KQL (SDK `Azure.Monitor.Query.Logs`), autenticando com `DefaultAzureCredential` (identidade gerenciada em produção, sessão do Azure CLI em desenvolvimento local — sem credencial nenhuma no código).
+- **`IGeminiAnalysisService`** — envia os logs recuperados ao Gemini com um prompt de engenharia de confiabilidade: distinguir ruído de erro real, correlacionar eventos próximos no tempo, e apontar causa raiz apenas quando há evidência suficiente nos logs.
+- **`IEmailNotificationService`** — envia o resultado da análise por e-mail via **SDK oficial do Resend**, reaproveitando o mesmo provedor já usado no fluxo de reset de senha da API.
+Todos os serviços (incluindo `ObservabilityAgentService`) são registrados como `Scoped`, não `Singleton` — cada execução do agente (seja por timer ou por HTTP) já é naturalmente um novo escopo de invocação, e o SDK do Resend depende de `IOptionsSnapshot` (inerentemente scoped), o que tornaria incompatível qualquer serviço singleton na cadeia.
+ 
+**Hospedagem:** Azure Functions no plano Consumption (serverless) — sem custo quando ocioso, dentro da cota gratuita mensal (1M de execuções) para o volume de uso deste projeto.
 
 ## Rodando localmente
 
